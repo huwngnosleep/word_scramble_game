@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./word-scramble.sass";
 import { Button } from 'react-bootstrap';
+import axios from 'axios';
 const WORDS = [
 	{text: "A", image: null},
 	{text: "B", image: null},
@@ -30,7 +31,7 @@ const WordScramble = () => {
 	const [scrambledWord, setScrambledWord] = useState("");
 	const [selectedWord, setSelectedWord] = useState()
 	const [message, setMessage] = useState("");
-
+	const [questions, setQuestions] = useState([])
 	const resetStreak = function() {
 		setStreak(0)
 	}
@@ -44,8 +45,8 @@ const WordScramble = () => {
 	}
 
 	const selectWord = () => {
-		const randomIndex = Math.floor(Math.random() * WORDS.length);
-		const tempWord = WORDS[randomIndex];
+		const randomIndex = Math.floor(Math.random() * questions.length);
+		const tempWord = questions[randomIndex];
 		return tempWord
 	};
 
@@ -82,7 +83,7 @@ const WordScramble = () => {
 		setIsPlayOn(true);
 		setInputValue("");
 		setMessage("");
-
+		getQuestion()
 		getWord()
 
 		resetStreak()
@@ -104,6 +105,18 @@ const WordScramble = () => {
 		return shuffledArray.join("");
 	};
 
+	async function getQuestion() {
+		try {
+			const data = await axios.get('http://localhost:8000/questions')
+			console.log(data.data)
+			setQuestions(data.data)
+			
+		} catch (error) {
+			console.error("ERROR", error)
+		}
+		
+	}
+
 	useEffect(() => {
 		let clearMessage;
 		if (message != WIN_MESSAGE) {
@@ -117,20 +130,24 @@ const WordScramble = () => {
 		};
 	}, [message]);
 
+	useEffect(() => {
+		getQuestion()
+	}, [])
+
 	return (
 		<div className='word_scramble'>
-			{!!message && (
-				<div className='message'>
-					<p> {message}</p>
-				</div>
-			)}
 
 			<h1>Word Scramble</h1>
 			<div className='content'>
 				{isPlayOn ? (
 					<>
+						{!!message && (
+							<div className='message'>
+								<p> {message}</p>
+							</div>
+						)}
 						<h3 style={{color: 'black'}}>Score: {streak}</h3>
-						<img src={selectedWord.image} style={{height: 250, width: 250, marginBottom: 20}}></img>
+						{selectedWord && <img src={selectedWord.image} style={{height: 250, width: 250, marginBottom: 20}}></img>}
 
 						<div className='board'>
 							{correctWord.split("").map((el, i) => (
